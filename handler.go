@@ -40,7 +40,7 @@ func (h *handler) handleList(w http.ResponseWriter, r *http.Request) {
 	}
 	defer recs.Close()
 
-	var tasks []task
+	tasks := []task{}
 	for recs.Next() {
 		var t task
 		err := recs.Scan(&t.ID, &t.Name, &t.Limit, &t.Status)
