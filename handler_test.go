@@ -140,3 +140,35 @@ func TestHandleDelete(t *testing.T) {
 		t.Fatalf("データの削除に失敗しました")
 	}
 }
+
+func TestHandleDeadlint(t *testing.T) {
+	// DB初期化
+	h := handler{db: setupDB(t)}
+
+	// データ追加
+	_, err := h.db.Exec(`INSERT INTO tasks (name, deadlimit, status) VALUES ('テストタスク', '2024-06-30', 'Not Started')`)
+	if err != nil {
+		t.Fatalf("データの追加に失敗しました: %v", err)
+	}
+
+	// データ更新
+	req := httptest.NewRequest("PATCH", "/tasks/1/deadlint", nil)
+	req.SetPathValue("id", "1")
+	rec := httptest.NewRecorder()
+	h.handleDeadline(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("期待されるステータスコードは %d ですが、実際は %d です", http.StatusOK, rec.Code)
+	}
+
+	// データ内容確認
+	var deadlimit string
+	err = h.db.QueryRow(`SELECT deadlimit FROM tasks WHERE id = 1`).Scan(&deadlimit)
+	if err != nil {
+		t.Fatalf("データの取得に失敗しました: %v", err)
+	}
+	if deadlimit != "2024-07-01" {
+		t.Errorf("期待されるデッドリミットは 2024-07-01 ですが、実際は %s です", deadlimit)
+	}
+
+}
